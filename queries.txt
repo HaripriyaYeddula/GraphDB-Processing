@@ -1,0 +1,56 @@
+1. Write a Gremlin command that creates the above graph [hint - you will also need a 'traversal' for it]. The command could be a multi-statement one, or a single line one (with function chaining).
+
+As a multi statement:
+
+g = TinkerGraph.open().traversal()
+
+Adding Vertices:
+v1 = g.addV("courses").property(id, 1).property("name", "CS101").next()
+v2 = g.addV("courses").property(id, 2).property("name", "CS201").next()
+v3 = g.addV("courses").property(id, 3).property("name", "CS220").next()
+v4 = g.addV("courses").property(id, 4).property("name", "CS334").next()
+v5 = g.addV("courses").property(id, 5).property("name", "CS420").next()
+v6 = g.addV("courses").property(id, 6).property("name", "CS681").next()
+v7 = g.addV("courses").property(id, 7).property("name", "CS400").next()
+v8 = g.addV("courses").property(id, 8).property("name", "CS526").next()
+
+Adding Edges:
+g.addE("requires pre-req").from(v2).to(v1).property(id, 9)
+g.addE("requires pre-req").from(v3).to(v2).property(id, 10)
+g.addE("requires pre-req").from(v4).to(v2).property(id, 11)
+g.addE("requires pre-req").from(v5).to(v3).property(id, 12)
+g.addE("requires pre-req").from(v6).to(v4).property(id, 13)
+g.addE("requires pre-req").from(v7).to(v4).property(id, 14)
+g.addE("requires pre-req").from(v8).to(v7).property(id, 15)
+g.addE("is a co-req").from(v5).to(v3).property(id, 16)
+g.addE("is a co-req").from(v8).to(v7).property(id, 17)
+
+TinkerGraph.open().traversal() creates a Graph instance with 0 vertices and 0 edges and returns the travelsource g to traverse the graph.
+addV() adds nodes to the graph with “courses” as label and each node is given a property “name” which is the course name.
+addE() adds edges with labels from one vertex to the other as specified by from() and to(). Each vertex and edge has an id associated to it specified by the property id.
+
+2. Write a query that will output JUST the doubly-connected nodes
+
+g.V().where(out().count().is(gt(1))).as(“a”).out("is a co-req”).as(“b”).select(“a”,”b”).by(“name”)
+
+g.V().where(out().count().is(gt(1))).as(“a”) lists down all the vertices which has more than one edge going out and we label it as “a”.
+out(“is a co-req”).as(“b”) lists down all the vertices which has an edge “is a co-req” edge going into it and we label this output as “b”.
+select(“a”,”b”).by(“name”) outputs the vertices that satisfies “a” and “b” results together by their name. 
+
+3. Write a query that will output all the ancestors (for us, these would be prereqs) of a given vertex.
+
+g.V().has("name", "CS526").repeat(out("requires pre-req")).emit().values("name")
+
+g.V().has("name", "CS526") returns the vertices that have CS526 as name.
+repeat(out("requires pre-req")).emit() keeps following the edges “requires pre-req” and returns the vertices along the way.
+.values("name") prints the vertices along the path by their name.
+
+4. Write a query that will output the max depth starting from a given node (provides a count (including itself) of all the connected nodes till the deepest leaf). This would give us a total count of the longest sequence of courses that can be taken, after having completed a prereq course. 
+
+g.V().has("name", "CS101").repeat(__.in()).emit().path().count(local).max()
+
+g.V().has("name", "CS101") returns the vertices that have CS101 as name.
+repeat(__.in()).emit().path() returns all the paths which has an incoming edge to the vertex CS101.
+count(local).max() finds the length of each path found and returns the maximum of it.
+
+
